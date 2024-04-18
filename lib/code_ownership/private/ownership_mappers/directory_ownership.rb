@@ -88,7 +88,6 @@ module CodeOwnership
             team = get_team_from_codeowners_file_within_directory(file_path)
             return team unless team.nil?
           end
-
           path_components = file_path.each_filename.to_a
           if file_path.absolute?
             path_components = ['/', *path_components]
@@ -115,13 +114,12 @@ module CodeOwnership
             team = @@directory_cache[potential_codeowners_file_name]
           elsif potential_codeowners_file.exist?
             team = owner_for_codeowners_file(potential_codeowners_file)
-
             @@directory_cache[potential_codeowners_file_name] = team
           else
             @@directory_cache[potential_codeowners_file_name] = nil
           end
 
-          return team
+          team
         end
       end
     end
