@@ -37,16 +37,22 @@ module CodeOwnership
         # subset of files, but rather we want code ownership for all files.
         #
         sig do
-          override.params(files: T::Array[String]).
-            returns(T::Hash[String, ::CodeTeams::Team])
+          override.params(_files: T::Array[String])
+                  .returns(T::Hash[String, ::CodeTeams::Team])
         end
-        def globs_to_owner(files)
-          # The T.unsafe is because the upstream RBI is wrong for Pathname.glob
-          T
-            .unsafe(Pathname)
-            .glob(File.join('**/', CODEOWNERS_DIRECTORY_FILE_NAME))
-            .map(&:cleanpath)
-            .each_with_object({}) do |pathname, res|
+        def globs_to_owner(_files)
+          file_list =
+            if CodeOwnership.configuration.use_git_ls_files
+              `git ls-files **/#{CODEOWNERS_DIRECTORY_FILE_NAME}`
+                .each_line
+                .map { Pathname.new(_1.strip).cleanpath }
+            else
+              T
+                .unsafe(Pathname)
+                .glob(File.join('**/', CODEOWNERS_DIRECTORY_FILE_NAME))
+                .map(&:cleanpath)
+            end
+          file_list.each_with_object({}) do |pathname, res|
             owner = owner_for_codeowners_file(pathname)
             res[pathname.dirname.cleanpath.join('**/**').to_s] = owner
           end
